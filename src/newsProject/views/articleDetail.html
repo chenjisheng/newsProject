@@ -1,0 +1,55 @@
+
+<div class="layui-container">
+    <div class="layui-row">
+        <div class="layui-col-md9">
+            <fieldset class="layui-elem-field layui-field-title" style="margin-top: 50px;">
+                <legend>文章详情</legend>
+            </fieldset>
+
+            <table class="layui-table">
+                <colgroup>
+                    <col width="150">
+                    <col width="150">
+                    <col width="200">
+                    <col>
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>标签</th>
+                    <th>内容</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>文章标题</td>
+                    <td>{{ .article.Title }}</td>
+                </tr>
+                <tr>
+                    <td>文章类型</td>
+                    <td>类型</td>
+                </tr>
+                <tr>
+                    <td>文章内容</td>
+                    <td>{{ .article.Content }}</td>
+                </tr>
+                <tr>
+                    <td>阅读次数</td>
+                    <td>{{ .article.Count }}</td>
+                </tr>
+                <tr>
+                    <td>阅读人</td>
+                    <td>ddd</td>
+                </tr>
+                <tr>
+                    <td>图片地址</td>
+                    <td><a href="{{.article.Img }}">{{ .article.Img }}</a></td>
+                </tr>
+                <tr>
+                    <td>图片</td>
+                    <td><img src="{{.article.Img }}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

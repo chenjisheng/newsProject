@@ -1,0 +1,75 @@
+<table class="layui-hide" id="demo" lay-filter="test">
+    <div class="layui-form-item" style="position:absolute;left: 0;top: 30px;z-index: 999">
+        <label class="layui-form-label">文章类型</label>
+        <div class="layui-input-block">
+            <select name="articleType" lay-filter="aihao">
+                <option value=""></option>
+                <option value="0">体育新闻</option>
+                <option value="1" selected="">财经新闻</option>
+                <option value="2">游戏新闻</option>
+                <option value="3">音乐新闻</option>
+                <option value="4">旅行新闻</option>
+            </select>
+        </div>
+    </div>
+</table>
+
+        <script type="text/html" id="barDemo">
+            <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>
+            <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+
+        <script>
+            layui.use(['table','form'], function(){
+                var table = layui.table;
+                var $ = layui.jquery;
+                //第一个实例
+                table.render({
+                    elem: '#demo'
+                    ,height: 'full-200'
+                    ,toolbar: '#demo'
+                    ,url: '/ShowArticle' //数据接口
+                    ,page: true //开启分页
+                    // ,toolbar: '#toolbarDemo'
+                    ,cols: [[ //表头
+                        {field: 'Id', title: 'ID', width:80, sort: true, fixed: 'left'},
+                        {field: 'Title', title: '标题', width:200}
+                        ,{field: 'Count', title: '阅读量', width:80, sort: true}
+                        ,{field: 'Img', title: '图片地址', width:300}
+                        ,{field: 'Time', title: '添加时间', width:300, sort: true}
+                        ,{field: 'Content', title: '文章内容', width:200, }
+                        ,{field: 'Count', title: '阅读量', width:80, sort: true}
+                        ,{fixed: 'right', width: 165, align:'center', toolbar: '#barDemo'}
+                    ]]
+                });
+                // 监听行工具事件
+                table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                    var data = obj.data //获得当前行数据
+                            ,layEvent = obj.event; //获得 lay-event 对应的值
+                    if(layEvent === 'detail'){
+                        window.location.href = "/ArticleDetail/" + obj.data.Id;
+                    } else if(layEvent === 'del'){
+                        layer.confirm('真的删除行么', function(index){
+                            obj.del(); //删除对应行（tr）的DOM结构
+                            layer.close(index);
+                            console.log(obj);
+                            $.ajax({
+                                url: "/ArticleDelete/"+obj.data.Id,
+                                success: function (data) {
+                                    console.log(data);
+                                    // window.location.href="/ShowMenu";
+                                    table.reload("demo");
+                                    layer.msg("删除成功");
+                                },
+                            });
+                        });
+                    } else if(layEvent === 'edit'){
+                        window.location.href = "/ArticleUpdate?id=" + obj.data.Id;
+                    }
+                });
+            });
+        </script>
+        <!--
+        =============================================
+        -->
