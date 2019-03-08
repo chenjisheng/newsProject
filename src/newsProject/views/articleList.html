@@ -1,16 +1,14 @@
 <table class="layui-hide" id="demo" lay-filter="test">
-    <div class="layui-form-item" style="position:absolute;left: 0;top: 30px;z-index: 999">
-        <label class="layui-form-label">文章类型</label>
-        <div class="layui-input-block">
-            <select name="articleType" lay-filter="aihao">
-                <option value=""></option>
-                <option value="0">体育新闻</option>
-                <option value="1" selected="">财经新闻</option>
-                <option value="2">游戏新闻</option>
-                <option value="3">音乐新闻</option>
-                <option value="4">旅行新闻</option>
-            </select>
-        </div>
+    <div class="demoTable">
+        文章类型
+        <select class="layui-input-block" data-type="reload">搜索
+            <option value=""></option>
+            <option value="0">体育新闻</option>
+            <option value="1" selected="">财经新闻</option>
+            <option value="2">游戏新闻</option>
+            <option value="3">音乐新闻</option>
+            <option value="4">旅行新闻</option>
+        </select>
     </div>
 </table>
 

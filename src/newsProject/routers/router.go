@@ -28,4 +28,12 @@ func init() {
     beego.Router("/ArticleDelete/:id",&controllers.ArticleController{},"get:HandDelete")
     // update article router 更新文章
     beego.Router("/ArticleUpdate",&controllers.ArticleController{},"get:ShowArticledetailUpdate;post:HandUpdate")
+    // article type show
+    beego.Router("/ArticleTypePage",&controllers.ArticleController{},"get:ArticleTypePage")
+    // show  article type 返回所有文章类型
+    beego.Router("/ArticleTypeAll",&controllers.ArticleController{},"get:ArticleTypeAll")
+    // add article type
+    beego.Router("/AddArticleType",&controllers.ArticleController{},"post:AddArticleType")
+    // delete article type
+    beego.Router("/DeleteArticleType/:id",&controllers.ArticleController{},"post:DeleteArticleType")
 }

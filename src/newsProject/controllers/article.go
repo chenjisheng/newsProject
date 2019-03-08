@@ -16,6 +16,90 @@ type ArticleController struct {
 	beego.Controller
 }
 
+// 添加文章类型页面
+// uri = ArticleTypePage
+func (this *ArticleController) ArticleTypePage(){
+	this.Layout = "base.html"
+	this.TplName = "addType.html"
+}
+
+// 展示文章类型 api 接口
+func (this *ArticleController) ArticleTypeAll(){
+	o := orm.NewOrm()
+	var datas = map[string]interface{}{}
+	var articleTypes []models.ArticleType
+	_,err := o.QueryTable("ArticleType").All(&articleTypes)
+	if err != nil {
+		beego.Info("查询数据错误")
+		datas["code"] = 1
+		datas["msg"] = "failed"
+		datas["data"] = articleTypes
+	} else {
+		datas["code"] = 0
+		datas["msg"] = "success"
+		datas["data"] = articleTypes
+	}
+	this.Data["json"] = datas
+	this.ServeJSON()
+	return
+
+}
+
+// 处理添加文章类型
+// url = AddArticleType
+func (this *ArticleController) AddArticleType(){
+	typeName := this.GetString("articleType")
+	if typeName == "" {
+		beego.Info("添加类型错误")
+		this.Redirect("/ArticleTypePage",302)
+		return
+	}
+	o := orm.NewOrm()
+	var articlType models.ArticleType
+	articlType.TypeName = typeName
+	res := o.Read(&articlType,"TypeName")
+	if res == nil {
+		beego.Info("类型存在,不需要插入",res)
+		this.Redirect("/ArticleTypePage",302)
+		return
+	}
+	_,err := o.Insert(&articlType)
+	if err != nil {
+		beego.Info("添加文章类型失败")
+	}
+	this.Redirect("/ArticleTypePage",302)
+}
+
+// 删除文章类型接口
+// url = DeleteArticleType/:id
+func (this *ArticleController) DeleteArticleType(){
+	var datas = make(map[string]interface{})
+	datas["code"] = 1
+	datas["msg"] = "failed"
+	id,err := this.GetInt(":id")
+	if err != nil {
+		datas["data"] = ""
+		this.Data["json"] = datas
+		this.ServeJSON()
+		return
+	}
+	o := orm.NewOrm()
+	articleType := models.ArticleType{Id:id}
+	_,err = o.Delete(&articleType)
+	if err != nil {
+		datas["data"] = ""
+		this.Data["json"] = datas
+		this.ServeJSON()
+		return
+	}
+	beego.Info("删除类型成功")
+	datas["code"] = 0
+	datas["msg"] = "successed"
+	this.Data["json"] = datas
+	this.ServeJSON()
+	return
+
+}
 // 显示文章内容,加载更新页面
 // uri = ArticleUpdate?id=11
 func (this *ArticleController) ShowArticledetailUpdate() {
@@ -52,7 +136,7 @@ func (this *ArticleController) HandUpdate() {
 	this.Redirect("/ShowMenu", 302)
 }
 
-// 删除文章
+// 删除文章 api 接口
 // uri = ArticleDelete/11
 func (this *ArticleController) HandDelete() {
 	id := this.GetString(":id")
