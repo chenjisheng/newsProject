@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"newsProject/models"
 	"newsProject/utils"
+	"time"
 )
 
 // 注册控制器
@@ -68,12 +68,18 @@ func (this *RegController) HandReg() {
 }
 
 func (this *LoginController) ShowLogin() {
+	name := this.Ctx.GetCookie("userName")
+	if name != ""{
+		this.Data["userName"] = name
+		this.Data["check"] = "checked"
+	}
 	this.TplName = "login.html"
 }
 func (this *LoginController) HandLogin() {
 	beego.Info("start login.")
 	userName := this.GetString("userName")
 	passWord := this.GetString("passWord")
+	remember := this.GetString("remember")
 	if userName == "" || passWord == "" {
 		beego.Info(userName, "登陆失败: name or passwd empty")
 		this.TplName = "login.html"
@@ -93,8 +99,13 @@ func (this *LoginController) HandLogin() {
 		this.TplName = "login.html"
 		return
 	}
+	if remember == "on" {
+		beego.Info("开启记录用户名")
+		this.Ctx.SetCookie("userName",userName,time.Second*3600)
+	} else {
+		this.Ctx.SetCookie("userName",userName,-1)
+	}
 	beego.Info("USERNAME: ", userName, "PASSWORD: ", passWord)
-	fmt.Println(user.UserName, user.Password)
 	beego.Info(userName, "登陆成功")
 	this.Redirect("/ShowMenu",302)
 }

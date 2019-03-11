@@ -7,10 +7,10 @@
 <body>
 <form name="login" method="post" action="/">
     <h1>用户登陆</h1>
-    <input type="text" name="userName">
+    <input type="text" name="userName" value="{{ .userName }}">
     <input type="text" name="passWord">
     <div>
-        <input type="checkbox" name="remember">
+        <input type="checkbox" name="remember" {{ .check }}>
         <label>记住用户名</label>
     </div>
 
