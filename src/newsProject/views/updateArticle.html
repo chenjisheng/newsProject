@@ -6,26 +6,29 @@
     <div class="layui-form-item">
         <label class="layui-form-label">文章标题</label>
         <div class="layui-input-block">
-            <input type="text" name="articleName" lay-verify="title" autocomplete="off" placeholder="请输入标题" class="layui-input" value="{{ .article.Title }}" >
+            <input type="text" name="articleName" lay-verify="title" autocomplete="off" placeholder="请输入标题"
+                   class="layui-input" value="{{ .article.Title }}">
         </div>
     </div>
 
     <div class="layui-form-item">
         <label class="layui-form-label">图片地址</label>
         <div class="layui-input-block">
-            <input type="text" name="articleImg" lay-verify="title" autocomplete="off" placeholder="请上传图片,勿手动更改!" class="layui-input" id="imgsrc" value="{{ .article.Img }}">
+            <input type="text" name="articleImg" lay-verify="title" autocomplete="off" placeholder="请上传图片,勿手动更改!"
+                   class="layui-input" id="imgsrc" value="{{ .article.Img }}">
         </div>
     </div>
     <div class="layui-form-item">
         <label class="layui-form-label">文章类型</label>
         <div class="layui-input-block">
             <select name="articleType" lay-filter="aihao">
-                <option value=""></option>
-                <option value="0">体育新闻</option>
-                <option value="1" selected="">财经新闻</option>
-                <option value="2">游戏新闻</option>
-                <option value="3">音乐新闻</option>
-                <option value="4">旅行新闻</option>
+            {{ range .articleType }}
+            {{ if ne .Id $.article.ArticleType.Id }}
+                <option value="{{ .TypeName }}">{{ .TypeName }}</option>
+            {{ else }}
+                <option value="{{ .TypeName }}" selected="{{ .TypeName }}">{{ .TypeName }}</option>
+            {{ end }}
+            {{ end }}
             </select>
         </div>
     </div>
@@ -53,42 +56,42 @@
 </form>
 <script>
     //Demo
-    layui.use(['form','upload'], function(){
+    layui.use(['form', 'upload'], function () {
         var form = layui.form;
         //监听提交
-        form.on('submit(formDemo)', function(data){
+        form.on('submit(formDemo)', function (data) {
             layer.msg(JSON.stringify(data.field));
             return false;
         });
 
         var $ = layui.jquery
-                ,upload = layui.upload;
+                , upload = layui.upload;
 
         //普通图片上传
         var uploadInst = upload.render({
             elem: '#test1'
-            ,url: '/UploadImg'
-            ,before: function(obj){
+            , url: '/UploadImg'
+            , before: function (obj) {
                 //预读本地文件示例，不支持ie8
-                obj.preview(function(index, file, result){
+                obj.preview(function (index, file, result) {
                     $('#demo1').attr('src', result); //图片链接（base64）
                 });
             }
-            ,done: function(res){
+            , done: function (res) {
                 //如果上传失败
-                if(res.code > 0){
+                if (res.code > 0) {
                     return layer.msg('上传失败');
                 }
 
-                $('#imgsrc').attr('value',res.data.url) ;
+                $('#imgsrc').attr('value', res.data.url);
                 return layer.msg('上传成功')
                 //上传成功
             }
-            ,error: function(){
+            , error: function () {
                 //演示失败状态，并实现重传
                 var demoText = $('#demoText');
                 demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
-                demoText.find('.demo-reload').on('click', function(){
+                demoText.find('.demo-reload').on('click', function () {
                     uploadInst.upload();
                 });
             }

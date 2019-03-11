@@ -104,9 +104,13 @@ func (this *ArticleController) DeleteArticleType(){
 // 显示文章内容,加载更新页面
 // uri = ArticleUpdate?id=11
 func (this *ArticleController) ShowArticledetailUpdate() {
+	o := orm.NewOrm()
+	articleType := []models.ArticleType{}
+	o.QueryTable("ArticleType").All(&articleType)
 	id := this.GetString("id")
 	newId, _ := strconv.Atoi(id)
 	_, article := selectData(newId)
+	this.Data["articleType"] = articleType
 	this.Data["article"] = article
 	this.Layout = "base.html"
 	this.TplName = "updateArticle.html"
@@ -126,11 +130,29 @@ func (this *ArticleController) HandUpdate() {
 	articleName := this.GetString("articleName")
 	articleContent := this.GetString("articleContent")
 	articleImg := this.GetString("articleImg")
+	TypeName := this.GetString("articleType")
+	beego.Info("更新后的类型为: ",TypeName)
+	// 类型判断
+	if TypeName == "" {
+		beego.Info("下拉框数据错误")
+		this.Redirect("/AddArticle", 302)
+		return
+	}
+	var articleType models.ArticleType
+	articleType.TypeName = TypeName
+	err := o.Read(&articleType,"TypeName")
+	if err != nil {
+		beego.Info("获取类型错误",err)
+		this.Redirect("/AddArticle", 302)
+		return
+	}
+	article.ArticleType = &articleType
+
 	// 更新新值
 	article.Title = articleName
 	article.Content = articleContent
 	article.Img = articleImg
-	_, err := o.Update(&article)
+	_, err = o.Update(&article)
 	if err != nil {
 		beego.Info("更新失败", err)
 	}
@@ -168,6 +190,13 @@ func (this *ArticleController) ShowArticleDetail() {
 	o, article := selectData(newId)
 	//article := models.Article{Id:newId}
 	article.Count += 1
+	// 根据文章表的文章类型Id 查询文章类型
+	var articleType models.ArticleType
+	articleType.Id = article.ArticleType.Id
+	o.Read(&articleType,"Id")
+	article.ArticleType.TypeName = articleType.TypeName
+	beego.Info(article.ArticleType.TypeName)
+
 	o.Update(&article, "Count")
 	this.Data["article"] = article
 	this.Layout = "base.html"
@@ -195,8 +224,6 @@ func (this *ArticleController) ShowArticleList() {
 	beego.Info("查询的类型为: ",typeName)
 	o := orm.NewOrm()
 	var articles []models.Article // 文章表
-	var articleType models.ArticleType // 文章类型表
-	articleType.TypeName = typeName
 	qs := o.QueryTable("Article")
 	var counts int64
 	if typeName == "" {
@@ -208,9 +235,8 @@ func (this *ArticleController) ShowArticleList() {
 		beego.Info("查询的数据为:",articles)
 	} else {
 		beego.Info("查询这个")
-		o.Read(&articleType,"TypeName") // 查询当前需要查询的文章类型
-		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType",articleType.Id).All(&articles)  // 1. pagesize 2. start 数据库限制查询;
-		counts = int64(len(articles))
+		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType__TypeName",typeName).All(&articles)  // 1. pagesize 2. start 数据库限制查询;
+		counts,err = qs.RelatedSel("ArticleType").Filter("ArticleType__TypeName",typeName).Count()
 		if err != nil {
 			beego.Info("查询总数错误.")
 		}
@@ -219,10 +245,7 @@ func (this *ArticleController) ShowArticleList() {
 	beego.Info("PAGE: ",page,"LIMIT: ",limit)
 	// 查询数据
 	// 将数据传递给视图
-
-
 	//_, err = qs.All(&articles) // select * from article;
-
 	var datas = map[string]interface{}{}
 	datas["code"] = 0
 	datas["msg"] = ""

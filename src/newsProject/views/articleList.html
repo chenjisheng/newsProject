@@ -3,6 +3,7 @@
     &nbsp;    文章类型：
     <div class="layui-inline">
         <select class="layui-input-block" name="articleType" id="demoReload" autocomplete="off">
+            <option value="">所有类型</option>
             {{ range .articleType }}
                 <option value="{{ .TypeName }}">{{ .TypeName }}</option>
                     {{ end }}
