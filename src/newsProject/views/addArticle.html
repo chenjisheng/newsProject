@@ -19,12 +19,9 @@
         <label class="layui-form-label">文章类型</label>
         <div class="layui-input-block">
             <select name="articleType" lay-filter="aihao">
-                <option value=""></option>
-                <option value="0">体育新闻</option>
-                <option value="1" selected="">财经新闻</option>
-                <option value="2">游戏新闻</option>
-                <option value="3">音乐新闻</option>
-                <option value="4">旅行新闻</option>
+                {{ range .articleType }}
+                <option value="{{ .TypeName }}">{{ .TypeName }}</option>
+                        {{ end }}
             </select>
         </div>
     </div>

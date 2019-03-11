@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	beego.SetLevel(beego.LevelDebug)
 	beego.Run()
 }
 

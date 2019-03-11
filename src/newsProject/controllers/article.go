@@ -24,6 +24,7 @@ func (this *ArticleController) ArticleTypePage(){
 }
 
 // 展示文章类型 api 接口
+// uri = ArticleTypeAll
 func (this *ArticleController) ArticleTypeAll(){
 	o := orm.NewOrm()
 	var datas = map[string]interface{}{}
@@ -70,8 +71,8 @@ func (this *ArticleController) AddArticleType(){
 	this.Redirect("/ArticleTypePage",302)
 }
 
-// 删除文章类型接口
-// url = DeleteArticleType/:id
+// 删除文章类型 api 接口
+// uri = DeleteArticleType/:id
 func (this *ArticleController) DeleteArticleType(){
 	var datas = make(map[string]interface{})
 	datas["code"] = 1
@@ -175,26 +176,53 @@ func (this *ArticleController) ShowArticleDetail() {
 
 // 显示主页
 func (this *ArticleController) ShowMenu(){
+	o := orm.NewOrm()
+	articleType := []models.ArticleType{}
+	o.QueryTable("ArticleType").All(&articleType)
+	this.Data["articleType"] = articleType
 	this.Layout = "base.html"
 	this.TplName = "articleList.html"
 }
 // 根据前端请求分页
+// uri = ShowArticle?page=1&limit=10&articletype=hh
 func (this *ArticleController) ShowArticleList() {
+	// 当前页面数
 	page,err := this.GetInt("page")
+	// 当前页面显示数量
 	limit,err := this.GetInt("limit")
+	// 查询的类型
+	typeName := this.GetString("articleType")
+	beego.Info("查询的类型为: ",typeName)
+	o := orm.NewOrm()
+	var articles []models.Article // 文章表
+	var articleType models.ArticleType // 文章类型表
+	articleType.TypeName = typeName
+	qs := o.QueryTable("Article")
+	var counts int64
+	if typeName == "" {
+		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").All(&articles)  // 1. pagesize 2. start 数据库限制查询;
+		counts,err = qs.RelatedSel("ArticleType").Count()
+		if err != nil {
+			beego.Info("查询总数错误.")
+		}
+		beego.Info("查询的数据为:",articles)
+	} else {
+		beego.Info("查询这个")
+		o.Read(&articleType,"TypeName") // 查询当前需要查询的文章类型
+		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType",articleType.Id).All(&articles)  // 1. pagesize 2. start 数据库限制查询;
+		counts = int64(len(articles))
+		if err != nil {
+			beego.Info("查询总数错误.")
+		}
+		beego.Info("查询的数据为:",articles)
+	}
 	beego.Info("PAGE: ",page,"LIMIT: ",limit)
 	// 查询数据
 	// 将数据传递给视图
-	o := orm.NewOrm()
-	qs := o.QueryTable("Article")
-	var articles []models.Article
+
+
 	//_, err = qs.All(&articles) // select * from article;
-	qs.Limit(limit,limit*(page-1)).All(&articles)  // 1. pagesize 2. start 数据库限制查询;
-	counts,err := qs.Count()
-	if err != nil {
-		beego.Info("查询总数错误.")
-	}
-	//datas =
+
 	var datas = map[string]interface{}{}
 	datas["code"] = 0
 	datas["msg"] = ""
@@ -207,6 +235,14 @@ func (this *ArticleController) ShowArticleList() {
 
 // 显示添加文章
 func (this *ArticleController) ShowAddArticle() {
+	o := orm.NewOrm()
+	var articleType []models.ArticleType
+	_,err := o.QueryTable("ArticleType").All(&articleType)
+	if err != nil {
+		beego.Info("查询文章类型错误",err)
+	}
+	beego.Info(articleType)
+	this.Data["articleType"] = articleType
 	this.Layout = "base.html"
 	this.TplName = "addArticle.html"
 }
@@ -225,7 +261,25 @@ func (this *ArticleController) HandAddArticle() {
 	article.Content = strings.Replace(articleContent, "\n", "", 10)
 	article.Time = time.Now().Add(time.Second * 28800)
 	article.Img = articleImg
-	_, err := o.Insert(&article)
+	// 获取到下拉框的数据
+	TypeName := this.GetString("articleType")
+	beego.Info("插入的类型为: ",TypeName)
+	// 类型判断
+	if TypeName == "" {
+		beego.Info("下拉框数据错误")
+		this.Redirect("/AddArticle", 302)
+		return
+	}
+	var articleType models.ArticleType
+	articleType.TypeName = TypeName
+	err := o.Read(&articleType,"TypeName")
+	if err != nil {
+		beego.Info("获取类型错误",err)
+		this.Redirect("/AddArticle", 302)
+		return
+	}
+	article.ArticleType = &articleType
+	_, err = o.Insert(&article)
 	if err != nil {
 		beego.Info("插入数据失败")
 		this.Redirect("/AddArticle", 302)
@@ -290,7 +344,7 @@ func (this *ArticleController) HandUploadImg(){
 	}
 
 }
-// 根据ID 查询数据库,返回 ORM 对象
+// 根据 ID 查询数据库article 表,返回 ORM 对象以及文章对象
 func selectData(id int) (o orm.Ormer, article models.Article) {
 	o = orm.NewOrm()
 	article = models.Article{Id: id}
