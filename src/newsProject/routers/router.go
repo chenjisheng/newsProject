@@ -13,7 +13,7 @@ func init() {
     beego.Router("/favicon.ico",&controllers.MainController{})
     // 注册用户
     beego.Router("/Register",&controllers.RegController{},"get:ShowReg;post:HandReg")
-    // 登陆
+    // 登陆 api 接口
 	beego.Router("/",&controllers.LoginController{},"get:ShowLogin;post:HandLogin")
     // 退出登陆
     beego.Router("/Article/Logout",&controllers.LoginController{},"get:Logout")

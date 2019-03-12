@@ -87,7 +87,7 @@ func (this *LoginController) ShowLogin() {
 }
 
 /*
-处理登陆
+处理登陆 api 接口
 uri: /
 method: post
 @params: userName string
@@ -99,9 +99,16 @@ func (this *LoginController) HandLogin() {
 	userName := this.GetString("userName")
 	passWord := this.GetString("passWord")
 	remember := this.GetString("remember")
+	var datas = make(map[string]interface{})
+	datas["code"] = 0
+	datas["msg"] = ""
 	if userName == "" || passWord == "" {
 		beego.Info(userName, "登陆失败: name or passwd empty")
-		this.TplName = "login.html"
+		datas["code"] = 1
+		datas["msg"] = "name or password error"
+		datas["data"] = ""
+		this.Data["json"] = datas
+		this.ServeJSON()
 		return
 	}
 	o := orm.NewOrm()
@@ -110,12 +117,20 @@ func (this *LoginController) HandLogin() {
 	err := o.Read(&user, "UserName")
 	if err != nil {
 		beego.Info(userName, "登陆失败: name / passwd not match", err)
-		this.TplName = "login.html"
+		datas["code"] = 1
+		datas["msg"] = "name or password error"
+		datas["data"] = ""
+		this.Data["json"] = datas
+		this.ServeJSON()
 		return
 	}
 	if user.Password != utils.EncryptStr(passWord) {
 		beego.Info(userName, "登陆失败: passwd / name not match", )
-		this.TplName = "login.html"
+		datas["code"] = 1
+		datas["msg"] = "name or password error"
+		datas["data"] = ""
+		this.Data["json"] = datas
+		this.ServeJSON()
 		return
 	}
 	if remember == "on" {
@@ -127,7 +142,11 @@ func (this *LoginController) HandLogin() {
 	beego.Info("USERNAME: ", userName, "PASSWORD: ", passWord)
 	beego.Info(userName, "登陆成功")
 	this.SetSession("userName",userName)
-	this.Redirect("/Article/ShowMenu",302)
+	datas["data"] = map[string]interface{}{"access_token":this.GetSession("userName")}
+	this.Data["json"] = datas
+	this.ServeJSON()
+	return
+	//this.Redirect("/Article/ShowMenu",302)
 }
 
 /*

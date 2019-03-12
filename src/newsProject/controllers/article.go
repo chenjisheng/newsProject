@@ -22,6 +22,7 @@ uri: /Article/AddArticleType
 method: get
  */
 func (this *ArticleController) ArticleTypePage() {
+	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Layout = "base.html"
 	this.TplName = "addType.html"
 }
@@ -135,6 +136,7 @@ func (this *ArticleController) ShowArticledetailUpdate() {
 	_, article := selectArticleData(newId)
 	this.Data["articleType"] = articleType
 	this.Data["article"] = article
+	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Layout = "base.html"
 	this.TplName = "updateArticle.html"
 	return
@@ -233,6 +235,7 @@ func (this *ArticleController) ShowArticleDetail() {
 
 	o.Update(&article, "Count")
 	this.Data["article"] = article
+	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Layout = "base.html"
 	this.TplName = "articleDetail.html"
 }
@@ -246,6 +249,7 @@ func (this *ArticleController) ShowMenu() {
 	o := orm.NewOrm()
 	articleType := []models.ArticleType{}
 	o.QueryTable("ArticleType").All(&articleType)
+	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Data["articleType"] = articleType
 	this.Layout = "base.html"
 	this.TplName = "articleList.html"
@@ -312,6 +316,7 @@ func (this *ArticleController) ShowAddArticle() {
 		beego.Info("查询文章类型错误", err)
 	}
 	beego.Info(articleType)
+	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Data["articleType"] = articleType
 	this.Layout = "base.html"
 	this.TplName = "addArticle.html"
