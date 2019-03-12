@@ -16,68 +16,86 @@ type ArticleController struct {
 	beego.Controller
 }
 
-// 添加文章类型页面
-// uri = ArticleTypePage
-func (this *ArticleController) ArticleTypePage(){
+/*
+添加文章类型页面
+uri: /Article/AddArticleType
+method: get
+ */
+func (this *ArticleController) ArticleTypePage() {
 	this.Layout = "base.html"
 	this.TplName = "addType.html"
 }
 
-// 展示文章类型 api 接口
-// uri = ArticleTypeAll
-func (this *ArticleController) ArticleTypeAll(){
+/*
+处理添加文章类型
+uri: /Article/AddArticleType
+method: post
+@params: typeName string
+ */
+func (this *ArticleController) AddArticleType() {
+	typeName := this.GetString("articleType")
+	if typeName == "" {
+		beego.Info("添加类型错误")
+		this.Redirect("/Article/ArticleTypePage", 302)
+		return
+	}
+	o := orm.NewOrm()
+	var articlType models.ArticleType
+	articlType.TypeName = typeName
+	res := o.Read(&articlType, "TypeName")
+	if res == nil {
+		beego.Info("类型存在,不需要插入", res)
+		this.Redirect("/Article/ArticleTypePage", 302)
+		return
+	}
+	_, err := o.Insert(&articlType)
+	if err != nil {
+		beego.Info("添加文章类型失败")
+	}
+	this.Redirect("/Article/AddArticleType", 302)
+}
+
+/*
+所有文章类型 api 接口
+uri: /Article/ArticleTypeAll
+method: get
+return: json
+ */
+func (this *ArticleController) ArticleTypeAll() {
 	o := orm.NewOrm()
 	var datas = map[string]interface{}{}
+	var counts int64
 	var articleTypes []models.ArticleType
-	_,err := o.QueryTable("ArticleType").All(&articleTypes)
+	_, err := o.QueryTable("ArticleType").All(&articleTypes)
 	if err != nil {
 		beego.Info("查询数据错误")
+		datas["count"] = counts
 		datas["code"] = 1
 		datas["msg"] = "failed"
 		datas["data"] = articleTypes
 	} else {
 		datas["code"] = 0
 		datas["msg"] = "success"
+		counts,_ = o.QueryTable("ArticleType").Count()
+		datas["count"] = counts
 		datas["data"] = articleTypes
 	}
 	this.Data["json"] = datas
 	this.ServeJSON()
 	return
-
 }
 
-// 处理添加文章类型
-// url = AddArticleType
-func (this *ArticleController) AddArticleType(){
-	typeName := this.GetString("articleType")
-	if typeName == "" {
-		beego.Info("添加类型错误")
-		this.Redirect("/ArticleTypePage",302)
-		return
-	}
-	o := orm.NewOrm()
-	var articlType models.ArticleType
-	articlType.TypeName = typeName
-	res := o.Read(&articlType,"TypeName")
-	if res == nil {
-		beego.Info("类型存在,不需要插入",res)
-		this.Redirect("/ArticleTypePage",302)
-		return
-	}
-	_,err := o.Insert(&articlType)
-	if err != nil {
-		beego.Info("添加文章类型失败")
-	}
-	this.Redirect("/ArticleTypePage",302)
-}
-
-// 删除文章类型 api 接口
-// uri = DeleteArticleType/:id
-func (this *ArticleController) DeleteArticleType(){
+/*
+删除文章类型 api 接口
+uri: /Article/DeleteArticleType/:id
+method: post
+return: json
+ */
+func (this *ArticleController) DeleteArticleType() {
 	var datas = make(map[string]interface{})
 	datas["code"] = 1
 	datas["msg"] = "failed"
-	id,err := this.GetInt(":id")
+	id, err := this.GetInt(":id")
 	if err != nil {
 		datas["data"] = ""
 		this.Data["json"] = datas
@@ -85,8 +103,8 @@ func (this *ArticleController) DeleteArticleType(){
 		return
 	}
 	o := orm.NewOrm()
-	articleType := models.ArticleType{Id:id}
-	_,err = o.Delete(&articleType)
+	articleType := models.ArticleType{Id: id}
+	_, err = o.Delete(&articleType)
 	if err != nil {
 		datas["data"] = ""
 		this.Data["json"] = datas
@@ -101,15 +119,20 @@ func (this *ArticleController) DeleteArticleType(){
 	return
 
 }
-// 显示文章内容,加载更新页面
-// uri = ArticleUpdate?id=11
+
+/*
+编辑文章页面
+uri: /Article/ArticleUpdate?id=
+method: get
+@params: id int
+*/
 func (this *ArticleController) ShowArticledetailUpdate() {
 	o := orm.NewOrm()
 	articleType := []models.ArticleType{}
 	o.QueryTable("ArticleType").All(&articleType)
 	id := this.GetString("id")
 	newId, _ := strconv.Atoi(id)
-	_, article := selectData(newId)
+	_, article := selectArticleData(newId)
 	this.Data["articleType"] = articleType
 	this.Data["article"] = article
 	this.Layout = "base.html"
@@ -117,8 +140,12 @@ func (this *ArticleController) ShowArticledetailUpdate() {
 	return
 }
 
-// 提交更新
-// uri = ArticleUpdate?id=33
+/*
+处理文章更新
+uri: /Article/ArticleUpdate?id=
+method: post
+@params: id int
+ */
 func (this *ArticleController) HandUpdate() {
 	path_ := this.Ctx.Request.URL.Path
 	query := this.Ctx.Request.URL.RawQuery
@@ -126,24 +153,24 @@ func (this *ArticleController) HandUpdate() {
 	beego.Info("当前请求的URL: ", url)
 	id := this.GetString("id")
 	newId, _ := strconv.Atoi(id)
-	o, article := selectData(newId)
+	o, article := selectArticleData(newId)
 	articleName := this.GetString("articleName")
 	articleContent := this.GetString("articleContent")
 	articleImg := this.GetString("articleImg")
 	TypeName := this.GetString("articleType")
-	beego.Info("更新后的类型为: ",TypeName)
+	beego.Info("更新后的类型为: ", TypeName)
 	// 类型判断
 	if TypeName == "" {
 		beego.Info("下拉框数据错误")
-		this.Redirect("/AddArticle", 302)
+		this.Redirect("/Article/AddArticle", 302)
 		return
 	}
 	var articleType models.ArticleType
 	articleType.TypeName = TypeName
-	err := o.Read(&articleType,"TypeName")
+	err := o.Read(&articleType, "TypeName")
 	if err != nil {
-		beego.Info("获取类型错误",err)
-		this.Redirect("/AddArticle", 302)
+		beego.Info("获取类型错误", err)
+		this.Redirect("/Article/AddArticle", 302)
 		return
 	}
 	article.ArticleType = &articleType
@@ -156,20 +183,23 @@ func (this *ArticleController) HandUpdate() {
 	if err != nil {
 		beego.Info("更新失败", err)
 	}
-	this.Redirect("/ShowMenu", 302)
+	this.Redirect("/Article/ShowMenu", 302)
 }
 
-// 删除文章 api 接口
-// uri = ArticleDelete/11
+/*
+删除文章 api 接口
+uri: /Article/ArticleDelete/:id
+method: get
+ */
 func (this *ArticleController) HandDelete() {
 	id := this.GetString(":id")
 	newId, _ := strconv.Atoi(id)
-	o, article := selectData(newId)
-	imgName := "static/img/"+filepath.Base(article.Img)
-	_,err := os.Stat(imgName)
+	o, article := selectArticleData(newId)
+	imgName := "static/img/" + filepath.Base(article.Img)
+	_, err := os.Stat(imgName)
 	if err != nil {
-		beego.Info("文件不存在",err)
-	} else{
+		beego.Info("文件不存在", err)
+	} else {
 		beego.Info("文件存在,开始删除文件")
 		os.Remove(imgName)
 	}
@@ -183,17 +213,21 @@ func (this *ArticleController) HandDelete() {
 	return
 }
 
-// 显示文章详情
+/*
+显示文章详情
+uri: /Article/ArticleDetail/:id
+method: get
+ */
 func (this *ArticleController) ShowArticleDetail() {
 	id := this.GetString(":id")
 	newId, _ := strconv.Atoi(id)
-	o, article := selectData(newId)
+	o, article := selectArticleData(newId)
 	//article := models.Article{Id:newId}
 	article.Count += 1
 	// 根据文章表的文章类型Id 查询文章类型
 	var articleType models.ArticleType
 	articleType.Id = article.ArticleType.Id
-	o.Read(&articleType,"Id")
+	o.Read(&articleType, "Id")
 	article.ArticleType.TypeName = articleType.TypeName
 	beego.Info(article.ArticleType.TypeName)
 
@@ -203,8 +237,12 @@ func (this *ArticleController) ShowArticleDetail() {
 	this.TplName = "articleDetail.html"
 }
 
-// 显示主页
-func (this *ArticleController) ShowMenu(){
+/*
+主页面
+uri: /Article/ShowMenu
+method: get
+ */
+func (this *ArticleController) ShowMenu() {
 	o := orm.NewOrm()
 	articleType := []models.ArticleType{}
 	o.QueryTable("ArticleType").All(&articleType)
@@ -212,37 +250,42 @@ func (this *ArticleController) ShowMenu(){
 	this.Layout = "base.html"
 	this.TplName = "articleList.html"
 }
-// 根据前端请求分页
-// uri = ShowArticle?page=1&limit=10&articletype=hh
+
+/*
+文章列表
+uri: /Article/ShowArticle
+method: get
+@params: page int
+		 limit int
+		 articletype string
+ */
 func (this *ArticleController) ShowArticleList() {
 	// 当前页面数
-	page,err := this.GetInt("page")
+	page, err := this.GetInt("page")
 	// 当前页面显示数量
-	limit,err := this.GetInt("limit")
+	limit, err := this.GetInt("limit")
 	// 查询的类型
 	typeName := this.GetString("articleType")
-	beego.Info("查询的类型为: ",typeName)
 	o := orm.NewOrm()
 	var articles []models.Article // 文章表
 	qs := o.QueryTable("Article")
 	var counts int64
 	if typeName == "" {
-		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").All(&articles)  // 1. pagesize 2. start 数据库限制查询;
-		counts,err = qs.RelatedSel("ArticleType").Count()
+		beego.Info("查询的文章类型为: 所有")
+		qs.Limit(limit, limit*(page-1)).RelatedSel("ArticleType").All(&articles) // 1. pagesize 2. start 数据库限制查询;
+		counts, err = qs.RelatedSel("ArticleType").Count()
 		if err != nil {
 			beego.Info("查询总数错误.")
 		}
-		beego.Info("查询的数据为:",articles)
 	} else {
-		beego.Info("查询这个")
-		qs.Limit(limit,limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType__TypeName",typeName).All(&articles)  // 1. pagesize 2. start 数据库限制查询;
-		counts,err = qs.RelatedSel("ArticleType").Filter("ArticleType__TypeName",typeName).Count()
+		beego.Info("查询的文章类型为: ", typeName)
+		qs.Limit(limit, limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType__TypeName", typeName).All(&articles) // 1. pagesize 2. start 数据库限制查询;
+		counts, err = qs.RelatedSel("ArticleType").Filter("ArticleType__TypeName", typeName).Count()
 		if err != nil {
 			beego.Info("查询总数错误.")
 		}
-		beego.Info("查询的数据为:",articles)
 	}
-	beego.Info("PAGE: ",page,"LIMIT: ",limit)
+	beego.Info("PAGE: ", page, "LIMIT: ", limit)
 	// 查询数据
 	// 将数据传递给视图
 	//_, err = qs.All(&articles) // select * from article;
@@ -256,13 +299,17 @@ func (this *ArticleController) ShowArticleList() {
 	return
 }
 
-// 显示添加文章
+/*
+显示添加文章
+uri: /Article/AddArticle
+method: get
+ */
 func (this *ArticleController) ShowAddArticle() {
 	o := orm.NewOrm()
 	var articleType []models.ArticleType
-	_,err := o.QueryTable("ArticleType").All(&articleType)
+	_, err := o.QueryTable("ArticleType").All(&articleType)
 	if err != nil {
-		beego.Info("查询文章类型错误",err)
+		beego.Info("查询文章类型错误", err)
 	}
 	beego.Info(articleType)
 	this.Data["articleType"] = articleType
@@ -270,7 +317,15 @@ func (this *ArticleController) ShowAddArticle() {
 	this.TplName = "addArticle.html"
 }
 
-// 添加文章
+/*
+处理添加文章
+uri: /Article/AddArticle
+method: post
+@params: articelName string
+		 articelContent string
+		 articleImg string
+		 articleType string
+  */
 func (this *ArticleController) HandAddArticle() {
 	// 获取数据
 	// 查询数据
@@ -286,34 +341,39 @@ func (this *ArticleController) HandAddArticle() {
 	article.Img = articleImg
 	// 获取到下拉框的数据
 	TypeName := this.GetString("articleType")
-	beego.Info("插入的类型为: ",TypeName)
+	beego.Info("插入的类型为: ", TypeName)
 	// 类型判断
 	if TypeName == "" {
 		beego.Info("下拉框数据错误")
-		this.Redirect("/AddArticle", 302)
+		this.Redirect("/Article/AddArticle", 302)
 		return
 	}
 	var articleType models.ArticleType
 	articleType.TypeName = TypeName
-	err := o.Read(&articleType,"TypeName")
+	err := o.Read(&articleType, "TypeName")
 	if err != nil {
-		beego.Info("获取类型错误",err)
-		this.Redirect("/AddArticle", 302)
+		beego.Info("获取类型错误", err)
+		this.Redirect("/Article/AddArticle", 302)
 		return
 	}
 	article.ArticleType = &articleType
 	_, err = o.Insert(&article)
 	if err != nil {
 		beego.Info("插入数据失败")
-		this.Redirect("/AddArticle", 302)
+		this.Redirect("/Article/AddArticle", 302)
 		return
 	}
-	this.Redirect("/ShowMenu", 302)
+	this.Redirect("/Article/ShowMenu", 302)
 }
 
-// 上传图片
-func (this *ArticleController) HandUploadImg(){
-	file,header,err:= this.Ctx.Request.FormFile("file")
+/*
+上传图片 api 接口
+uri: /Article/UploadImg
+method: post
+@params: file []byte
+ */
+func (this *ArticleController) HandUploadImg() {
+	file, header, err := this.Ctx.Request.FormFile("file")
 	// 检查是否上传文件
 	code := 1
 	errmsg := "failed"
@@ -360,15 +420,18 @@ func (this *ArticleController) HandUploadImg(){
 		}
 		datas["code"] = 0
 		datas["msg"] = infomsg
-		datas["data"] = map[string]string{"url":"/static/img/"+fileName+ext}
+		datas["data"] = map[string]string{"url": "/static/img/" + fileName + ext}
 		this.Data["json"] = datas
 		this.ServeJSON()
 		return
 	}
 
 }
-// 根据 ID 查询数据库article 表,返回 ORM 对象以及文章对象
-func selectData(id int) (o orm.Ormer, article models.Article) {
+
+/*
+根据 ID 查询数据库 article 表,返回 ORM 对象以及文章对象
+ */
+func selectArticleData(id int) (o orm.Ormer, article models.Article) {
 	o = orm.NewOrm()
 	article = models.Article{Id: id}
 	err := o.Read(&article)

@@ -1,7 +1,7 @@
 <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
     <legend>编辑文章</legend>
 </fieldset>
-<form class="layui-form" action="/ArticleUpdate?id={{ .article.Id }}" method="post">
+<form class="layui-form" action="/Article/ArticleUpdate?id={{ .article.Id }}" method="post">
 
     <div class="layui-form-item">
         <label class="layui-form-label">文章标题</label>
@@ -70,7 +70,7 @@
         //普通图片上传
         var uploadInst = upload.render({
             elem: '#test1'
-            , url: '/UploadImg'
+            , url: '/Article/UploadImg'
             , before: function (obj) {
                 //预读本地文件示例，不支持ie8
                 obj.preview(function (index, file, result) {

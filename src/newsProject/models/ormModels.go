@@ -13,10 +13,10 @@ type User struct {
 	Id int
 	UserName string
 	Password string
-	Articles []*Article `orm:"rel(m2m)"`
+	Articles []*Article `orm:"rel(m2m)"` // 一个用户对应多个文章,同时一个文章可以被多个用户查看
 }
 
-// 文章列表 和 文章类型是一对多
+// 文章列表
 type Article struct {
 	Id int `orm:"auto"`
 	Title string `orm:"size(20)"`// 标题
@@ -24,8 +24,8 @@ type Article struct {
 	Img string `orm:"size(50);null"`// 图片
 	Time time.Time `orm:"type(datetime);auto_now_add"`// 发布时间
 	Count int `orm:"default(0)"`// 阅读量
-	ArticleType *ArticleType `orm:"rel(fk)"`// 文章类型
-	User []*User `orm:"reverse(many)"`
+	ArticleType *ArticleType `orm:"rel(fk)"` // 一个类型对应多个文章
+	User []*User `orm:"reverse(many)"`  //
 }
 
 // 文章类型
@@ -43,8 +43,12 @@ func init() {
 	mysqlDbName := beego.AppConfig.String("mysqldb")
 	// username:passwd@tcp(ip:port)/dbname?charset=utf8
 	dataSource := mysqlUser + ":" + mysqlPassword + "@" + "tcp(" + mysqlUrls + ":" + mysqlPort + ")/" + mysqlDbName + "?charset=utf8"
+	// 注册数据库驱动
 	orm.RegisterDriver(driverName,orm.DRMySQL)
+	// 注册数据库
 	orm.RegisterDataBase("default",driverName,dataSource)
+	// 注册数据库表
 	orm.RegisterModel(new(User),new(Article),new(ArticleType))
+	// 同步数据库,第二个参数是否强制更改数据库表结构变化
 	orm.RunSyncdb("default",false,true)
 }

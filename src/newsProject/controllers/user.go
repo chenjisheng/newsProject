@@ -18,14 +18,19 @@ type LoginController struct {
 	beego.Controller
 }
 
-// 注册页面
+/*
+注册页面
+uri: /Register
+method: get
+ */
 func (this *RegController) ShowReg() {
 	this.TplName = "register.html"
 }
 
-// 注册post
 /*
-
+处理注册
+uri: /Register
+method: post
  */
 func (this *RegController) HandReg() {
 	// 获取前端数据
@@ -67,6 +72,11 @@ func (this *RegController) HandReg() {
 	// 4. 返回登陆
 }
 
+/*
+登陆页面
+uri: /
+method: get
+ */
 func (this *LoginController) ShowLogin() {
 	name := this.Ctx.GetCookie("userName")
 	if name != ""{
@@ -75,6 +85,15 @@ func (this *LoginController) ShowLogin() {
 	}
 	this.TplName = "login.html"
 }
+
+/*
+处理登陆
+uri: /
+method: post
+@params: userName string
+		 password string
+		 remember string
+ */
 func (this *LoginController) HandLogin() {
 	beego.Info("start login.")
 	userName := this.GetString("userName")
@@ -107,5 +126,20 @@ func (this *LoginController) HandLogin() {
 	}
 	beego.Info("USERNAME: ", userName, "PASSWORD: ", passWord)
 	beego.Info(userName, "登陆成功")
-	this.Redirect("/ShowMenu",302)
+	this.SetSession("userName",userName)
+	this.Redirect("/Article/ShowMenu",302)
+}
+
+/*
+退出登陆
+uri: /Logout
+method: get
+ */
+func (this *LoginController) Logout() {
+	// 1. 删除登陆状态
+	// 2. 跳转到登陆页面
+	userName := this.GetSession("userName")
+	beego.Info(userName,"退出登陆.")
+	this.DelSession("userName")
+	this.Redirect("/",302)
 }
