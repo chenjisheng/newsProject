@@ -24,7 +24,7 @@ type Article struct {
 	Img string `orm:"size(50);null"`// 图片
 	Time time.Time `orm:"type(datetime);auto_now_add"`// 发布时间
 	Count int `orm:"default(0)"`// 阅读量
-	ArticleType *ArticleType `orm:"rel(fk)"` // 一个类型对应多个文章
+	ArticleType *ArticleType `orm:"rel(fk);null;on_delete(set_null)"` // 一个类型对应多个文章
 	User []*User `orm:"reverse(many)"`  //
 }
 

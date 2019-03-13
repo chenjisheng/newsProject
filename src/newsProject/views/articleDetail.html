@@ -1,4 +1,3 @@
-
 <div class="layui-container">
     <div class="layui-row">
         <div class="layui-col-md9">
@@ -37,8 +36,12 @@
                     <td>{{ .article.Count }}</td>
                 </tr>
                 <tr>
-                    <td>阅读人</td>
-                    <td>ddd</td>
+                    <td>最近浏览</td>
+                    <td>{{ range .users }}
+                    {{ .UserName }}|
+                    {{ end }}
+                    </td>
+
                 </tr>
                 <tr>
                     <td>图片地址</td>

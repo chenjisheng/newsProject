@@ -232,9 +232,26 @@ func (this *ArticleController) ShowArticleDetail() {
 	o.Read(&articleType, "Id")
 	article.ArticleType.TypeName = articleType.TypeName
 	beego.Info(article.ArticleType.TypeName)
-
 	o.Update(&article, "Count")
+	// 多对多插入读者
+	// 获取多对多操作对象
+	// 获取article 表的 user 字段操作对象
+	m2m := o.QueryM2M(&article,"User")
+	// 获取插入对象
+	user := models.User{UserName:this.GetSession("userName").(string)}
+	o.Read(&user,"UserName")
+	// 多对多插入
+	_, err := m2m.Add(&user)
+	if err != nil {
+		beego.Info("插入读者失败.")
+	}
+	//o.LoadRelated(&article,"User")
+	// 多对多查询需要反向思维查询, 查询文章的读者,需要从用户查起:
+	// filter 当前表字段名__目标表名__目标表字段
+	var users []models.User
+	o.QueryTable("User").Filter("Articles__Article__Id",newId).Distinct().All(&users)
 	this.Data["article"] = article
+	this.Data["users"] = users
 	this.Data["userName"] = this.Ctx.GetCookie("userName")
 	this.Layout = "base.html"
 	this.TplName = "articleDetail.html"
@@ -284,6 +301,7 @@ func (this *ArticleController) ShowArticleList() {
 	} else {
 		beego.Info("查询的文章类型为: ", typeName)
 		qs.Limit(limit, limit*(page-1)).RelatedSel("ArticleType").Filter("ArticleType__TypeName", typeName).All(&articles) // 1. pagesize 2. start 数据库限制查询;
+		// 查询article 表,过滤articleType 表中的typename 字段== typename 的值
 		counts, err = qs.RelatedSel("ArticleType").Filter("ArticleType__TypeName", typeName).Count()
 		if err != nil {
 			beego.Info("查询总数错误.")
